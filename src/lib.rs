@@ -25,7 +25,7 @@ pub mod resolve;
 pub use did::{Did, DidMethod, DidType};
 pub use cid::Cid;
 pub use wallet::Wallet;
-pub use pop::{Pop, build_pop_header, verify_pop};
+pub use pop::{Pop, PopPayloadV1, PopError, build_pop_header, verify_pop};
 pub use ident::Ident;
 
 /// Re-export json_atomic for downstream canonical serialization

@@ -1,9 +1,9 @@
 [package]
 name = "ubl-id"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-description = "Universal Business Ledger identity primitives: DIDs (did:ubl:*), CIDs (cid:blake3:*), Wallets, and PoP headers. The identity kernel for the UBL ecosystem."
+description = "Universal Business Ledger identity primitives: DIDs (did:ubl:*), CIDs (cid:blake3:*), Wallets, and PoP headers. RFC-0001 compliant."
 readme = "README.md"
 repository = "https://github.com/danvoulez/ubl-id"
 homepage = "https://id.ubl.agency"

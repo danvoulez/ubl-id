@@ -24,7 +24,7 @@ use thiserror::Error;
 use time::OffsetDateTime;
 
 use crate::did::Did;
-use crate::pop::Pop;
+use crate::pop::{Pop, PopPayloadV1};
 
 /// Wallet errors
 #[derive(Debug, Error)]
@@ -158,22 +158,32 @@ impl Wallet {
         ts_override: Option<i64>,
     ) -> Result<Pop, WalletError> {
         let ts = ts_override.unwrap_or_else(|| OffsetDateTime::now_utc().unix_timestamp());
-        let msg = format!("{} {}\n{}", method, path, ts);
-        let sig = self.signing_key.sign(msg.as_bytes());
-        let sig_b64 = B64URL.encode(sig.to_bytes());
 
+        // Build payload v1 per RFC-0001
         let ath = access_token.map(|tok| {
-            let digest = blake3::hash(tok.as_bytes());
-            B64URL.encode(digest.as_bytes())
+            format!("blake3:{}", blake3::hash(tok.as_bytes()).to_hex())
         });
 
-        Ok(Pop {
-            wallet_did: self.did.as_str().to_string(),
+        let payload = PopPayloadV1 {
+            v: 1,
+            m: method.to_uppercase(),
+            p: path.to_string(),
             ts,
-            method: method.to_string(),
-            path: path.to_string(),
-            sig: sig_b64,
             ath,
+        };
+
+        // Canonicalize payload for signing
+        let payload_bytes = json_atomic::canonize(&payload)
+            .map_err(|e| WalletError::SigningError(e.to_string()))?;
+
+        // Sign the canonical payload bytes
+        let sig = self.signing_key.sign(&payload_bytes);
+
+        Ok(Pop {
+            payload,
+            payload_bytes,
+            signature: sig.to_bytes(),
+            wallet_did: self.did.as_str().to_string(),
         })
     }
 
@@ -224,7 +234,8 @@ mod tests {
         let w = Wallet::generate();
         let pop = w.sign_pop("POST", "/v1/chips/mint").unwrap();
         assert_eq!(pop.wallet_did, w.did().as_str());
-        assert_eq!(pop.method, "POST");
-        assert_eq!(pop.path, "/v1/chips/mint");
+        assert_eq!(pop.payload.m, "POST");
+        assert_eq!(pop.payload.p, "/v1/chips/mint");
+        assert_eq!(pop.payload.v, 1);
     }
 }

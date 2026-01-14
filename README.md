@@ -6,23 +6,23 @@
 
 > **UBL — Universal Business Ledger and Security OS for Agents**
 > 
-> Audit-ready, EU-grade privacy standards. Incredibly easy onboarding for humans and LLMs.
+> Audit-ready, EU-grade privacy standards. RFC-0001 compliant.
 
 The **identity kernel** for the UBL ecosystem. Provides unified primitives for:
 
 - **DIDs** — Decentralized Identifiers for entities (users, orgs, agents, apps, wallets)
 - **CIDs** — Content Identifiers for immutable data (chips, blueprints, proofs)
 - **Wallets** — Ephemeral Ed25519 keypairs for session-based signing
-- **PoP** — Proof-of-Possession headers for request authentication
+- **PoP** — Proof-of-Possession headers for request authentication (RFC-0001 §6)
 
 ## Installation
 
 ```toml
 [dependencies]
-ubl-id = "0.2"
+ubl-id = "0.3"
 
 # With Directory resolution
-ubl-id = { version = "0.2", features = ["resolve"] }
+ubl-id = { version = "0.3", features = ["resolve"] }
 ```
 
 ## Quick Start
@@ -45,6 +45,19 @@ let wallet = Wallet::generate();
 
 // Sign a PoP header for an HTTP request
 let pop = wallet.sign_pop("POST", "/v1/chips/mint").unwrap();
+// Wire format: payload.sig.wallet_did (RFC-0001)
+println!("X-UBL-POW: {}", pop.encode());
+```
+
+## PoP Wire Format v1 (RFC-0001)
+
+```
+X-UBL-POW: <payload_b64>.<signature_b64>.<wallet_did>
+```
+
+Payload structure:
+```json
+{"v":1,"m":"POST","p":"/t/tenant/v1/action","ts":1704067200,"ath":"blake3:..."}
 ```
 
 ## DID Types
